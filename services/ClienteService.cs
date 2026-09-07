@@ -311,7 +311,7 @@ namespace SimasTurbo.Services
                 if (locacoesAtivas != null)
                 {
                     resposta.Dados = null;
-                    resposta.Mensagem = "Não é possível excluir o cliente pois ele possui locações ativas.";
+                    resposta.Mensagem = "Não é possível excluir o cliente pois possui locações associadas.";
                     resposta.IsSucesso = false;
                     resposta.StatusCode = 400;
                     return resposta;

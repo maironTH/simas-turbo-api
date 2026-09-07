@@ -273,7 +273,7 @@ namespace SimasTurbo.Services
                 if (locacaoAtiva != null)
                 {
                     resposta.Dados = null;
-                    resposta.Mensagem = "Não é possível deletar o veículo, pois ele está em locação.";
+                    resposta.Mensagem = "Não é possível deletar o veículo, pois ele possui locações associadas.";
                     resposta.IsSucesso = false;
                     resposta.StatusCode = 400;
                     return resposta;

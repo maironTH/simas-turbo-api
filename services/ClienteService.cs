@@ -29,15 +29,6 @@ namespace SimasTurbo.Services
 
                 var clientes = await conexao.QueryAsync<ClienteListarDto>(query);
 
-                if (clientes == null)
-                {
-                    resposta.Dados = null;
-                    resposta.Mensagem = "Nenhum cliente encontrado.";
-                    resposta.IsSucesso = false;
-                    resposta.StatusCode = 404;
-                    return resposta;
-                }
-
                 resposta.Dados = clientes.ToList();
                 resposta.Mensagem = "Clientes Listados com Sucesso";
             } 

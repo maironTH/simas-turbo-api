@@ -27,15 +27,6 @@ namespace SimasTurbo.Services
                 """;
 
                 var veiculos = await conexao.QueryAsync<Veiculo>(query);
-                
-                if (veiculos == null)
-                {
-                    resposta.Dados = null;
-                    resposta.Mensagem = "Nenhum veículo encontrado.";
-                    resposta.IsSucesso = false;
-                    resposta.StatusCode = 404;
-                    return resposta;
-                }
                
                 resposta.Dados = veiculos.ToList();
                 resposta.Mensagem = "Veículos listados com sucesso.";

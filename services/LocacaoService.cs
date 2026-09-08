@@ -30,16 +30,6 @@ namespace SimasTurbo.Services
 
                 var locacao = await conexao.QueryAsync<LocacaoListarDto>(query);
                 
-                if (locacao == null)
-                {
-                 
-                    resposta.Dados = null;
-                    resposta.Mensagem = "Nenhuma locação encontrada.";
-                    resposta.IsSucesso = false;
-                    resposta.StatusCode = 404;
-                    return resposta;
-                }
-                
                 resposta.Dados = locacao.ToList();
                 resposta.Mensagem = "Locações Listadas com Sucesso";
             }catch (Exception e)

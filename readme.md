@@ -5,7 +5,7 @@ API RESTful desenvolvida para o processo seletivo da Include, focada em gestão 
 ---
 
 ## 🚀 Tecnologias
-* **Linguagem:** C# (.NET 1)
+* **Linguagem:** C# (.NET 10)
 * **Banco de Dados:** PostgreSQL (Hospedado na nuvem via Neon.tech)
 * **Acesso a Dados:** Dapper (Micro-ORM)
 * **Documentação:** Swagger / OpenAPI
@@ -54,4 +54,4 @@ API RESTful desenvolvida para o processo seletivo da Include, focada em gestão 
 
 1. Clone o repositório:
    ```bash
-   git clone [https://github.com/maironTH/simas-turbo-api.git](https://github.com/maironTH/simas-turbo-api.git)
+   git clone https://github.com/maironTH/simas-turbo-api.git

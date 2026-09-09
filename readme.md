@@ -7,6 +7,7 @@ API RESTful desenvolvida para o processo seletivo da Include, focada em gestão 
 ## 🚀 Tecnologias
 * **Linguagem:** C# (.NET 10)
 * **Banco de Dados:** PostgreSQL (Hospedado na nuvem via Neon.tech)
+* **Autenticação:** JWT Bearer e BCrypt
 * **Acesso a Dados:** Dapper (Micro-ORM)
 * **Documentação:** Swagger / OpenAPI
 
@@ -17,10 +18,11 @@ API RESTful desenvolvida para o processo seletivo da Include, focada em gestão 
 * **Thin Controller & Fat Service:** Os *Controllers* funcionam apenas como roteadores HTTP leves, enquanto toda a lógica de negócio e manipulação de dados fica isolada nos *Services*.
 * **Padronização de Respostas (`ModeloResposta<T>`):** Uso de um *wrapper* genérico para unificar o formato dos retornos JSON, controlando mensagens, status de sucesso e códigos HTTP de forma limpa.
 * **Integridade Transacional (ACID):** Operações que envolvem múltiplas tabelas (como registrar uma locação e alterar o status do veículo) utilizam transações explícitas (`BeginTransactionAsync`) com tratamento de *rollback*.
+* **Autenticação e autorização:** A API utiliza JWT Bearer com claims de identificação e função (`ADMIN` ou `FUNCIONARIO`). As senhas são protegidas com BCrypt, e a chave de assinatura é obrigatória e carregada por User Secrets ou variável de ambiente.
 * **Ajustes de Performance com Dapper:** 
   * Mapeamento global de propriedades com `MatchNamesWithUnderscores` para converter automaticamente o *snake_case* do banco para o *PascalCase* do C#.
   * Implementação de um `DateOnlyTypeHandler` customizado para lidar nativamente com datas.
-  * Validações de duplicidade feitas diretamente no SQL com checagens rápidas (`LIMIT 1`).
+    * Validações de duplicidade feitas diretamente em SQL com checagens rápidas (`LIMIT 1`). No cadastro de clientes, CPF, CNH, telefone e e-mail devem ser únicos.
 
 ---
 
@@ -94,10 +96,10 @@ API RESTful desenvolvida para o processo seletivo da Include, focada em gestão 
        id UUID PRIMARY KEY,
        nome VARCHAR(150) NOT NULL,
        data_nascimento DATE NOT NULL,
-       telefone VARCHAR(15) NOT NULL,
-       email VARCHAR(100) NOT NULL,
+       telefone VARCHAR(15) NOT NULL UNIQUE,
+       email VARCHAR(100) NOT NULL UNIQUE,
        cpf VARCHAR(11) NOT NULL UNIQUE,
-       cnh VARCHAR(15) NOT NULL,
+       cnh VARCHAR(15) NOT NULL UNIQUE,
        cep VARCHAR(8) NOT NULL,
        uf VARCHAR(2) NOT NULL,
        cidade VARCHAR(100) NOT NULL,

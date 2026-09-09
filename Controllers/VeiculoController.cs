@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using SimasTurbo.Services;
 using SimasTurbo.Dto;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace SimasTurbo.Controllers
 {
+    [Authorize(Roles = "ADMIN,FUNCIONARIO")]
     [ApiController]
     [Route("api/[controller]")]
     public class VeiculoController : ControllerBase
@@ -53,10 +54,6 @@ namespace SimasTurbo.Controllers
         {
             var resposta = await _veiculoInterface.DeletarVeiculo(id);
 
-            if (!resposta.IsSucesso)
-            {
-                return StatusCode(resposta.StatusCode, resposta);
-            }
             return StatusCode(resposta.StatusCode, resposta);
         }
     }

@@ -31,11 +31,13 @@ namespace SimasTurbo.Services
 
                 resposta.Dados = clientes.ToList();
                 resposta.Mensagem = "Clientes Listados com Sucesso";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             } 
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem= $"Erro ao Listar os Clientes: {e.Message}";
+                resposta.Mensagem= "Erro ao listar os clientes.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;  
             }
@@ -68,11 +70,13 @@ namespace SimasTurbo.Services
 
                 resposta.Dados = cliente;
                 resposta.Mensagem = "Cliente encontrado com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem= $"Erro ao buscar o Cliente: {e.Message}";
+                resposta.Mensagem= "Erro ao buscar o cliente.";
                 resposta.StatusCode = 500;
                 resposta.IsSucesso = false;
             }
@@ -146,8 +150,8 @@ namespace SimasTurbo.Services
                 };
 
                 const string query = """
-                INSERT INTO cliente (nome, data_nascimento, telefone, email, cpf, cnh, cep, uf, cidade, bairro, logradouro, numero, complemento)
-                VALUES (@Nome, @DataNascimento, @Telefone, @Email, @Cpf, @Cnh, @Cep, @UF, @Cidade, @Bairro, @Logradouro, @Numero, @Complemento)
+                INSERT INTO cliente (id, nome, data_nascimento, telefone, email, cpf, cnh, cep, uf, cidade, bairro, logradouro, numero, complemento)
+                VALUES (@Id, @Nome, @DataNascimento, @Telefone, @Email, @Cpf, @Cnh, @Cep, @UF, @Cidade, @Bairro, @Logradouro, @Numero, @Complemento)
                 RETURNING *;
                 """;
 
@@ -156,11 +160,12 @@ namespace SimasTurbo.Services
                 resposta.Dados = novoCliente;
                 resposta.Mensagem = "Cliente Cadastrado com Sucesso";
                 resposta.StatusCode = 201;
+                resposta.IsSucesso = true;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem= $"Erro ao Cadastrar o Cliente: {e.Message}";
+                resposta.Mensagem= "Erro ao cadastrar o cliente.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -260,11 +265,13 @@ namespace SimasTurbo.Services
                 
                 resposta.Dados = clienteExistente;
                 resposta.Mensagem = "Cliente atualizado com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem= $"Erro ao atualizar o Cliente: {e.Message}";
+                resposta.Mensagem= "Erro ao atualizar o cliente.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -315,12 +322,14 @@ namespace SimasTurbo.Services
 
                 resposta.Dados = cliente;
                 resposta.Mensagem = "Cliente deletado com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem= $"Erro ao deletar o Cliente: {e.Message}";
+                resposta.Mensagem= "Erro ao deletar o cliente.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }

@@ -30,11 +30,13 @@ namespace SimasTurbo.Services
                
                 resposta.Dados = veiculos.ToList();
                 resposta.Mensagem = "Veículos listados com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception ex)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao listar veículos: {ex.Message}";
+                resposta.Mensagem = "Erro ao listar veículos.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -69,12 +71,13 @@ namespace SimasTurbo.Services
                     resposta.Dados = veiculo;
                     resposta.Mensagem = "Veículo encontrado com sucesso.";
                     resposta.IsSucesso = true;
+                    resposta.StatusCode = 200;
                 }
             }
-            catch (Exception ex)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao buscar veículo: {ex.Message}";
+                resposta.Mensagem = "Erro ao buscar veículo.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -138,10 +141,10 @@ namespace SimasTurbo.Services
                 resposta.IsSucesso = true;
                 resposta.StatusCode = 201;
             }
-            catch (Exception ex)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao cadastrar veículo: {ex.Message}";
+                resposta.Mensagem = "Erro ao cadastrar veículo.";
                 resposta.StatusCode = 500;
                 resposta.IsSucesso = false;
             }
@@ -169,6 +172,7 @@ namespace SimasTurbo.Services
                     resposta.Dados = null;
                     resposta.Mensagem = "Veículo não encontrado.";
                     resposta.IsSucesso = false;
+                    resposta.StatusCode = 404;
                     return resposta;
                 }
 
@@ -197,9 +201,49 @@ namespace SimasTurbo.Services
                 veiculoExistente.ValorDiaria = veiculoAtualizarDto.ValorDiaria.HasValue ? veiculoAtualizarDto.ValorDiaria.Value : veiculoExistente.ValorDiaria;
                 veiculoExistente.Status = veiculoAtualizarDto.Status.HasValue ? veiculoAtualizarDto.Status.Value : veiculoExistente.Status;
 
+                if (veiculoAtualizarDto.Status == StatusVeiculo.Disponivel)
+                {
+                    const string queryLocacaoAtiva = """
+                    SELECT 1
+                    FROM locacao
+                    WHERE id_veiculo = @Id AND data_devolucao IS NULL
+                    LIMIT 1;
+                    """;
+
+                    var possuiLocacaoAtiva = await conexao.ExecuteScalarAsync<int?>(queryLocacaoAtiva, new { Id = id });
+                    if (possuiLocacaoAtiva != null)
+                    {
+                        resposta.Dados = null;
+                        resposta.Mensagem = "Não é possível deixar o veículo disponível enquanto existir uma locação ativa.";
+                        resposta.IsSucesso = false;
+                        resposta.StatusCode = 400;
+                        return resposta;
+                    }
+                }
+
+                var anoAtual = DateTime.Now.Year;
+                if (veiculoExistente.Ano < anoAtual - 20 || veiculoExistente.Ano > anoAtual + 1)
+                {
+                    resposta.Dados = null;
+                    resposta.Mensagem = "O veículo deve ter no máximo 20 anos de uso e não pode ter um ano de fabricação inválido.";
+                    resposta.IsSucesso = false;
+                    resposta.StatusCode = 400;
+                    return resposta;
+                }
+
+                if (veiculoExistente.ValorDiaria < 0)
+                {
+                    resposta.Dados = null;
+                    resposta.Mensagem = "O valor da diária deve ser maior ou igual a zero.";
+                    resposta.IsSucesso = false;
+                    resposta.StatusCode = 400;
+                    return resposta;
+                }
+
                 const string queryAtualiza = """
                 UPDATE veiculo
-                SET marca = @Marca,
+                SET placa = @Placa,
+                    marca = @Marca,
                     modelo = @Modelo,
                     ano = @Ano,
                     valor_diaria = @ValorDiaria,
@@ -210,6 +254,7 @@ namespace SimasTurbo.Services
                 await conexao.ExecuteAsync(queryAtualiza, new
                 {
                     Id = veiculoExistente.Id,
+                    Placa = veiculoExistente.Placa,
                     Marca = veiculoExistente.Marca,
                     Modelo = veiculoExistente.Modelo,
                     Ano = veiculoExistente.Ano,
@@ -219,11 +264,13 @@ namespace SimasTurbo.Services
                 
                 resposta.Dados = veiculoExistente;
                 resposta.Mensagem = "Veículo atualizado com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception ex)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao atualizar veículo: {ex.Message}";
+                resposta.Mensagem = "Erro ao atualizar veículo.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -278,11 +325,13 @@ namespace SimasTurbo.Services
 
                 resposta.Dados = veiculoExistente;
                 resposta.Mensagem = "Veículo deletado com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception ex)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao deletar veículo: {ex.Message}";
+                resposta.Mensagem = "Erro ao deletar veículo.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }

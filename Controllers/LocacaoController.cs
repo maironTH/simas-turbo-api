@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using SimasTurbo.Dto;
 using SimasTurbo.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SimasTurbo.Controllers
 {
+    [Authorize(Roles = "ADMIN,FUNCIONARIO")]
     [ApiController]
-    [Route ("Api/[Controller]")]
+    [Route("api/[controller]")]
     public class LocacaoController : ControllerBase
     {
         private readonly ILocacaoInterface _locacaoInterface;
@@ -59,10 +61,6 @@ namespace SimasTurbo.Controllers
         {
             var resposta = await _locacaoInterface.DeletarLocacao(id);
 
-            if (!resposta.IsSucesso)
-            {
-                return StatusCode(resposta.StatusCode, resposta);
-            }
             return StatusCode(resposta.StatusCode, resposta);
         }
     }

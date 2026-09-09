@@ -24,18 +24,33 @@ namespace SimasTurbo.Services
 
 
                 
-                var query = """
-                Select * from locacao
+                const string query = """
+                SELECT
+                    l.id AS Id,
+                    c.nome AS NomeCliente,
+                    c.cpf AS CpfCliente,
+                    v.placa AS PlacaVeiculo,
+                    l.data_retirada AS DataRetirada,
+                    l.prazo_devolucao AS PrazoDevolucao,
+                    l.data_devolucao AS DataDevolucao,
+                    l.valor_total AS ValorTotal,
+                    l.status::text AS Status
+                FROM locacao l
+                INNER JOIN cliente c ON l.id_cliente = c.id
+                INNER JOIN veiculo v ON l.id_veiculo = v.id;
                 """;
 
                 var locacao = await conexao.QueryAsync<LocacaoListarDto>(query);
                 
                 resposta.Dados = locacao.ToList();
                 resposta.Mensagem = "Locações Listadas com Sucesso";
-            }catch (Exception e)
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
+            }
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao Listar as Locações: {e.Message}";
+                resposta.Mensagem = "Erro ao listar as locações.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -60,7 +75,8 @@ namespace SimasTurbo.Services
                     l.data_retirada AS DataRetirada,
                     l.prazo_devolucao AS PrazoDevolucao,
                     l.data_devolucao AS DataDevolucao,
-                    l.valor_total AS ValorTotal
+                    l.valor_total AS ValorTotal,
+                    l.status::text AS Status
                 FROM locacao l
                 INNER JOIN cliente c ON l.id_cliente = c.id
                 INNER JOIN veiculo v ON l.id_veiculo = v.id
@@ -70,12 +86,13 @@ namespace SimasTurbo.Services
                 var locacoes = await conexao.QueryAsync<LocacaoListarDto>(query, new { CpfCliente = cpfCliente });
                 resposta.Dados = locacoes.ToList();
                 resposta.Mensagem = "Locações do cliente listadas com sucesso.";
+                resposta.IsSucesso = true;
                 resposta.StatusCode = 200;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao listar as locações do cliente: {e.Message}";
+                resposta.Mensagem = "Erro ao listar as locações do cliente.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -100,7 +117,8 @@ namespace SimasTurbo.Services
                 l.data_retirada AS DataRetirada,
                 l.prazo_devolucao AS PrazoDevolucao,
                 l.data_devolucao AS DataDevolucao,
-                l.valor_total AS ValorTotal
+                l.valor_total AS ValorTotal,
+                l.status::text AS Status
                 FROM locacao l
                 INNER JOIN veiculo v ON l.id_veiculo = v.id
                 INNER JOIN cliente c ON  l.id_cliente = c.id
@@ -110,12 +128,13 @@ namespace SimasTurbo.Services
                 var locacoes = await conexao.QueryAsync<LocacaoListarDto>(query, new { PlacaVeiculo = placaVeiculo});
                 resposta.Dados = locacoes.ToList();
                 resposta.Mensagem = "Locações do veículo listadas com sucesso.";
+                resposta.IsSucesso = true;
                 resposta.StatusCode = 200;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao listar as locações do veículo: {e.Message}";
+                resposta.Mensagem = "Erro ao listar as locações do veículo.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -133,12 +152,16 @@ namespace SimasTurbo.Services
                 using var conexao = new NpgsqlConnection(stringConexao);
 
                 await conexao.OpenAsync();
+                await using var transacao = await conexao.BeginTransactionAsync();
 
                 const string SqlClienteId = """
                 SELECT id FROM cliente WHERE cpf = @CpfCliente;
                 """;
 
-                var clienteId = await conexao.ExecuteScalarAsync<Guid?>(SqlClienteId, new { locacaoCadastrarDto.CpfCliente });
+                var clienteId = await conexao.ExecuteScalarAsync<Guid?>(
+                    SqlClienteId,
+                    new { locacaoCadastrarDto.CpfCliente },
+                    transacao);
 
                 if (clienteId == null)
                 {
@@ -150,10 +173,17 @@ namespace SimasTurbo.Services
                 }
                 
                 const string SqlVeiculoId = """
-                SELECT id, status, valor_diaria as valorDiaria FROM veiculo WHERE placa = @PlacaVeiculo LIMIT 1;
+                SELECT id, status, valor_diaria AS valorDiaria
+                FROM veiculo
+                WHERE placa = @PlacaVeiculo
+                LIMIT 1
+                FOR UPDATE;
                 """;
 
-                var veiculo = await conexao.QueryFirstOrDefaultAsync<Veiculo>(SqlVeiculoId, new { locacaoCadastrarDto.PlacaVeiculo });
+                var veiculo = await conexao.QueryFirstOrDefaultAsync<Veiculo>(
+                    SqlVeiculoId,
+                    new { locacaoCadastrarDto.PlacaVeiculo },
+                    transacao);
                 
                 if (veiculo == null)
                 {
@@ -175,9 +205,17 @@ namespace SimasTurbo.Services
 
 
 
-                var dataRetirada = DateTime.Now; 
+                var dataRetirada = locacaoCadastrarDto.DataRetirada;
                 var dataRetiradaDateOnly = DateOnly.FromDateTime(dataRetirada);
-                   
+
+                if (dataRetiradaDateOnly < DateOnly.FromDateTime(DateTime.Now))
+                {
+                    resposta.Dados = null;
+                    resposta.Mensagem = "A data de retirada não pode estar no passado.";
+                    resposta.IsSucesso = false;
+                    resposta.StatusCode = 400;
+                    return resposta;
+                }
 
                 if (locacaoCadastrarDto.PrazoDevolucao <= dataRetiradaDateOnly)
                 {
@@ -200,8 +238,6 @@ namespace SimasTurbo.Services
                     PrazoDevolucao = locacaoCadastrarDto.PrazoDevolucao,
                     ValorTotal = valorTotal,
                 };
-
-                using var transacao = await conexao.BeginTransactionAsync();
 
                 try
                 {
@@ -233,11 +269,13 @@ namespace SimasTurbo.Services
                 }
                 resposta.Dados = novaLocacao;
                 resposta.Mensagem = "Locação cadastrada com sucesso.";  
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 201;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao cadastrar a locação: {e.Message}";
+                resposta.Mensagem = "Erro ao cadastrar a locação.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -320,18 +358,21 @@ namespace SimasTurbo.Services
                     await transacao.CommitAsync();
                     
                     locacaoExistente.DataDevolucao = dataAtual;
+                    locacaoExistente.Status = isAtrasado ? StatusLocacao.Atrasado : StatusLocacao.Devolvido;
                     resposta.Dados = locacaoExistente;
                     resposta.Mensagem = "Locação devolvida com sucesso.";
+                    resposta.IsSucesso = true;
+                    resposta.StatusCode = 200;
                 } catch
                 {
                     await transacao.RollbackAsync();
                     throw;
                 }
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao devolver a locação: {e.Message}";
+                resposta.Mensagem = "Erro ao devolver a locação.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }
@@ -379,11 +420,13 @@ namespace SimasTurbo.Services
                 await conexao.ExecuteAsync(sqlDeletaLocacao, new { Id = id });
                 resposta.Dados = locacaoExistente;
                 resposta.Mensagem = "Locação deletada com sucesso.";
+                resposta.IsSucesso = true;
+                resposta.StatusCode = 200;
             }
-            catch (Exception e)
+            catch
             {
                 resposta.Dados = null;
-                resposta.Mensagem = $"Erro ao deletar a locação: {e.Message}";
+                resposta.Mensagem = "Erro ao deletar a locação.";
                 resposta.IsSucesso = false;
                 resposta.StatusCode = 500;
             }

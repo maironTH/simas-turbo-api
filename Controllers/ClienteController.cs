@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using SimasTurbo.Services;
 using SimasTurbo.Dto;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SimasTurbo.Controllers
 {
+    [Authorize(Roles = "ADMIN,FUNCIONARIO")]
     [ApiController]
-    [Route("api/[Controller]")]
+    [Route("api/[controller]")]
     public class ClienteController : ControllerBase
     {
         private readonly IClienteInterface _clienteInterface;

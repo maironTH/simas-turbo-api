@@ -23,7 +23,7 @@ namespace SimasTurbo.Config
                 return parsedDate;
 
     
-    throw new InvalidCastException($"Não foi possível converter o valor '{value}' do tipo {value.GetType()} para DateOnly.");
+            throw new InvalidCastException($"Não foi possível converter o valor '{value}' do tipo {value.GetType()} para DateOnly.");
         }
     }
 }

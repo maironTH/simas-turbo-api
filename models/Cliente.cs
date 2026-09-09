@@ -10,6 +10,7 @@ namespace SimasTurbo.Models
         public string Nome { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "O campo Data de Nascimento é obrigatório.")]
+
         public DateOnly DataNascimento { get; set; }
         
         [Required(ErrorMessage = "O campo Telefone é obrigatório.")]
